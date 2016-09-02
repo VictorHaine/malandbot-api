@@ -6,13 +6,13 @@ const path = require("path");
 const cache =require("memory-cache");
 
 let app = express();
-let port = process.env.PORT || 3000;
+let port = 80;
 let publicDir = path.join(__dirname, 'public');
 
 app.use(morgan('dev'));
-app.use('/', express.static(publicDir));
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({ extended: true }));
+//app.use('/', express.static(publicDir));
+//app.use(bodyparser.json());
+//app.use(bodyparser.urlencoded({ extended: true }));
 app.use(function(req, res, next){
     
     var roboList = cache.get('roboList');
@@ -35,8 +35,8 @@ app.get('/:roboid', (req, res) => {
     
     if(!commandList)
         res.send('null');
-    
-    res.send(commandList.shift());
+    else
+    	res.send(commandList.shift());
 });
 
 app.get('/move/:roboid/:direction', (req, res) => {
