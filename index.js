@@ -13,6 +13,11 @@ app.use(morgan('dev'));
 //app.use('/', express.static(publicDir));
 //app.use(bodyparser.json());
 //app.use(bodyparser.urlencoded({ extended: true }));
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 app.use(function(req, res, next){
     
     var roboList = cache.get('roboList');
@@ -30,13 +35,27 @@ app.get('/', (req, res) => {
 });
 
 app.get('/:roboid', (req, res) => {
-    
     var commandList = req.roboList[req.params.roboid];
-    
-    if(!commandList)
-        res.send('null');
-    else
-    	res.send(commandList.shift());
+    if(!commandList) {
+	res.send('');
+	return;
+    }
+
+    var command = commandList.shift();
+    if(!command) {
+        res.send('');
+        return;
+    } 
+
+    var now = Date.now();
+    if((now - command.timeStamp) > 3000) {
+        req.roboList[req.params.roboid] = [];
+        cache.put("roboList", req.roboList);
+        res.send('');
+        return;
+    }
+
+    res.send(command.command);
 });
 
 app.get('/move/:roboid/:direction', (req, res) => {
@@ -45,8 +64,10 @@ app.get('/move/:roboid/:direction', (req, res) => {
     
     if(!commandList)
         commandList = [];
-        
-    commandList.push(req.params.direction);
+
+    var command = {command: req.params.direction, timeStamp: Date.now()};        
+
+    commandList.push(command);
     req.roboList[req.params.roboid] = commandList;
     
     cache.put("roboList", req.roboList);
